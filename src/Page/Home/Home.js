@@ -4,12 +4,40 @@ import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 
 const Home = () => {
+  const neowFeed = (startDate, endDate) => {
+    const url = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${startDate}&end_date=${endDate}&api_key=evpVefJ271MoTyw6Sc2oMZgxk1VS01LbeszZjfcy`;
+
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Astroid data ", data);
+      })
+      .catch((error) => console.log(error));
+  };
   const handleSubmit = (event) => {
     event.preventDefault();
     const form = event.target;
-    const startDate = form.startDate.value;
-    const endDate = form.endDate.value;
+    let startDate = form.startDate.value;
+    let endDate = form.endDate.value;
+    startDate = new Date(startDate)
+      .toLocaleDateString()
+      .split("/")
+      .reverse()
+      .join("-");
+
+    endDate = new Date(endDate)
+      .toLocaleDateString()
+      .split("/")
+      .reverse()
+      .join("-");
+
     console.log(startDate, endDate);
+    neowFeed(startDate, endDate);
   };
   return (
     <div>
@@ -20,7 +48,7 @@ const Home = () => {
           <Form onSubmit={handleSubmit} className=" d-flex m-auto">
             <Form.Group
               className="me-4 w-25 text-white"
-              controlId="formBasicEmail"
+              controlId="formstartDate"
             >
               <Form.Label>Start Date</Form.Label>
               <Form.Control
@@ -34,7 +62,7 @@ const Home = () => {
 
             <Form.Group
               className="me-4 w-25 text-white"
-              controlId="formBasicPassword"
+              controlId="formendDate"
             >
               <Form.Label>endDate</Form.Label>
               <Form.Control
