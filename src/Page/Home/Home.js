@@ -41,6 +41,10 @@ ChartJS.register(
 const Home = () => {
   const [asteroid, setAsteroid] = useState(null);
   const [lineData, setLineData] = useState(null);
+  const [fastestAsteroidInKMH, setFastestAsteroidInKMH] = useState(null);
+  const [avgSizeOfAsteroidInKM, setAvgSizeOfAsteroidInKM] = useState(null);
+  const [closestAsteroid, setClosestAsteroid] = useState(null);
+  const [asteroidCount, setAsteroidCount] = useState(0);
 
   const lineOptions = {
     responsive: true,
@@ -50,7 +54,7 @@ const Home = () => {
       },
       title: {
         display: true,
-        text: "Chart.js Line Chart",
+        text: "Asteroid Data",
       },
     },
   };
@@ -72,6 +76,75 @@ const Home = () => {
 
         const radarLevel = Object.keys(data.near_earth_objects);
         const LineLabels = Object.keys(data.near_earth_objects);
+
+        const asteroidMap = [];
+
+        LineLabels.map((date) => {
+          setAsteroidCount(asteroidCount + 1);
+          const earthObj = data.near_earth_objects[date];
+          earthObj.map((obj) => {
+            const { close_approach_data, estimated_diameter } = obj;
+
+            const { kilometers_per_hour } =
+              close_approach_data[0].relative_velocity;
+            const { kilometers } = close_approach_data[0].miss_distance;
+            const { estimated_diameter_max } = estimated_diameter?.kilometers;
+            asteroidMap.push({
+              id: obj.id,
+              date,
+              kilometers_per_hour: Number(kilometers_per_hour),
+              estimated_diameter_max: Number(estimated_diameter_max),
+              closest_kilometers: Number(kilometers),
+            });
+          });
+        });
+
+        asteroidMap.sort((x, y) => {
+          if (x.kilometers_per_hour > y.kilometers_per_hour) {
+            return 1;
+          }
+          if (x.kilometers_per_hour < y.kilometers_per_hour) {
+            return -1;
+          }
+          return 0;
+        });
+        console.log({ asteroidMap });
+
+        setAvgSizeOfAsteroidInKM(
+          asteroidMap.reduce(
+            (acc, curr) => acc + curr.estimated_diameter_max,
+            0
+          ) / asteroidMap.length
+        );
+
+        setFastestAsteroidInKMH(
+          data.near_earth_objects[
+            asteroidMap[asteroidMap.length - 1].date
+          ].find((item) => (item.id = asteroidMap[asteroidMap.length - 1].date))
+        );
+        console.log({ fastestAsteroidInKMH });
+
+        asteroidMap.sort((x, y) => {
+          if (x.closest_kilometers > y.closest_kilometers) {
+            return 1;
+          }
+          if (x.closest_kilometers < y.closest_kilometers) {
+            return -1;
+          }
+          return 0;
+        });
+
+        console.log({ asteroidMap });
+        setFastestAsteroidInKMH(
+          data.near_earth_objects[
+            asteroidMap[asteroidMap.length - 1].date
+          ].find((item) => (item.id = asteroidMap[asteroidMap.length - 1].date))
+        );
+        setClosestAsteroid(
+          data.near_earth_objects[asteroidMap[0].date].find(
+            (item) => (item.id = asteroidMap[0].date)
+          )
+        );
 
         radarLevel.map((date) =>
           radarData.push(data.near_earth_objects[date].length)
@@ -134,45 +207,55 @@ const Home = () => {
     <div>
       <Card className="mb-2 d-flex justify-content-center" border="warning">
         <Card.Body>
-          <Card.Title className="fw-bold text-warning">{}</Card.Title>
+          <Card.Title className="fw-bold text-center h1 text-warning">
+            Asteroid - Neo Stats
+          </Card.Title>
 
-          <Form onSubmit={handleSubmit} className=" d-flex m-auto">
-            <Form.Group
-              className="me-4 w-25 text-dark"
-              controlId="formstartDate"
+          <div>
+            <Form
+              onSubmit={handleSubmit}
+              className=" d-flex justify-content-center"
             >
-              <Form.Label>Start Date</Form.Label>
-
-              <Form.Control
-                name="startDate"
-                type="date"
-                className="border-4 border-dark"
-                placeholder="Start Date"
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="me-4 w-25 text-dark" controlId="formendDate">
-              <Form.Label>End Date</Form.Label>
-              <Form.Control
-                name="endDate"
-                type="date"
-                placeholder="End Date"
-                className="border-4 border-dark"
-                required
-              />
-            </Form.Group>
-
-            <div className="w-25 mt-4">
-              <Button
-                variant="light"
-                className="border-4  border-dark mt-2"
-                type="submit"
+              <Form.Group
+                className="me-4 w-25 text-dark"
+                controlId="formstartDate"
               >
-                Submit
-              </Button>
-            </div>
-          </Form>
+                <Form.Label>Start Date</Form.Label>
+
+                <Form.Control
+                  name="startDate"
+                  type="date"
+                  className="border-4 border-dark"
+                  placeholder="Start Date"
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group
+                className="me-4 w-25 text-dark"
+                controlId="formendDate"
+              >
+                <Form.Label>End Date</Form.Label>
+                <Form.Control
+                  name="endDate"
+                  type="date"
+                  placeholder="End Date"
+                  className="border-4 border-dark"
+                  required
+                />
+              </Form.Group>
+
+              <div className="w-25 mt-4">
+                <Button
+                  variant="warning"
+                  className="border-4  border-white mt-2"
+                  type="submit"
+                >
+                  Submit
+                </Button>
+              </div>
+            </Form>
+          </div>
           <Row>
             <Col>
               {asteroid ? <Radar className="m-auto" data={asteroid} /> : ""}
@@ -191,6 +274,66 @@ const Home = () => {
           </Row>
         </Card.Body>
       </Card>
+
+      {fastestAsteroidInKMH ? (
+        <div>
+          <Row>
+            <Col>
+              <Card className="mb-2 d-flex justify-content-center">
+                <Card.Body>
+                  <Card.Title className="fw-bold">Fastest Asteroid</Card.Title>
+
+                  <Card.Text>
+                    Asteroid name: {fastestAsteroidInKMH.name}
+                  </Card.Text>
+                  <Card.Text>
+                    Asteroid Size:
+                    {
+                      fastestAsteroidInKMH.estimated_diameter.kilometers
+                        .estimated_diameter_max
+                    }{" "}
+                    kilometers
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col>
+              <Card className="mb-2 d-flex justify-content-center">
+                <Card.Body>
+                  <Card.Title className="fw-bold">
+                    Average size of asteroid
+                  </Card.Title>
+
+                  <Card.Text>
+                    Average size: {avgSizeOfAsteroidInKM} kilometers
+                  </Card.Text>
+                  <Card.Text>Total Asteroid: {asteroidCount}</Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col>
+              {" "}
+              <Card className="mb-2 d-flex justify-content-center">
+                <Card.Body>
+                  <Card.Title className="fw-bold">Closest Asteroid</Card.Title>
+
+                  <Card.Text>Name: {closestAsteroid.name}</Card.Text>
+                  <Card.Text>
+                    Distance:{" "}
+                    {
+                      closestAsteroid.close_approach_data[0].miss_distance
+                        .kilometers
+                    }{" "}
+                    kilometers
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 };
