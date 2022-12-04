@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import { Line } from "react-chartjs-2";
 
 import {
   Chart as ChartJS,
@@ -10,9 +11,13 @@ import {
   LineElement,
   Filler,
   Tooltip,
+  CategoryScale,
+  LinearScale,
+  Title,
   Legend,
 } from "chart.js";
 import { Radar } from "react-chartjs-2";
+import { Col, Row } from "react-bootstrap";
 
 ChartJS.register(
   RadialLinearScale,
@@ -23,8 +28,32 @@ ChartJS.register(
   Legend
 );
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 const Home = () => {
   const [asteroid, setAsteroid] = useState(null);
+  const [lineData, setLineData] = useState(null);
+
+  const lineOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      title: {
+        display: true,
+        text: "Chart.js Line Chart",
+      },
+    },
+  };
 
   const neowFeed = (startDate, endDate) => {
     const url = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${startDate}&end_date=${endDate}&api_key=evpVefJ271MoTyw6Sc2oMZgxk1VS01LbeszZjfcy`;
@@ -42,6 +71,7 @@ const Home = () => {
         const radarData = [];
 
         const radarLevel = Object.keys(data.near_earth_objects);
+        const LineLabels = Object.keys(data.near_earth_objects);
 
         radarLevel.map((date) =>
           radarData.push(data.near_earth_objects[date].length)
@@ -60,6 +90,23 @@ const Home = () => {
         };
         console.log(radarLevel, radarData);
         setAsteroid(payload);
+
+        const dataSet = [
+          {
+            label: "Neo Data",
+            data: LineLabels.map(
+              (date) => data.near_earth_objects[date].length
+            ),
+            borderColor: "rgb(255, 99, 132)",
+            backgroundColor: "rgba(255, 99, 132, 0.5)",
+          },
+        ];
+
+        const _lineData = {
+          labels: LineLabels,
+          datasets: dataSet,
+        };
+        setLineData(_lineData);
       })
       .catch((error) => console.log(error));
   };
@@ -126,7 +173,22 @@ const Home = () => {
               </Button>
             </div>
           </Form>
-          {asteroid ? <Radar className="w-50 h-50" data={asteroid} /> : ""}
+          <Row>
+            <Col>
+              {asteroid ? <Radar className="m-auto" data={asteroid} /> : ""}
+            </Col>
+            <Col>
+              {asteroid ? (
+                <Line
+                  className="m-auto"
+                  options={lineOptions}
+                  data={lineData}
+                />
+              ) : (
+                ""
+              )}
+            </Col>
+          </Row>
         </Card.Body>
       </Card>
     </div>
