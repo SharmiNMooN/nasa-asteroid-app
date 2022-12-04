@@ -71,7 +71,7 @@ const Home = () => {
       .then((res) => res.json())
       .then((data) => {
         console.log("Astroid data ", data);
-
+        setAsteroidCount(data.element_count);
         const radarData = [];
 
         const radarLevel = Object.keys(data.near_earth_objects);
@@ -80,7 +80,6 @@ const Home = () => {
         const asteroidMap = [];
 
         LineLabels.map((date) => {
-          setAsteroidCount(asteroidCount + 1);
           const earthObj = data.near_earth_objects[date];
           earthObj.map((obj) => {
             const { close_approach_data, estimated_diameter } = obj;
@@ -108,13 +107,12 @@ const Home = () => {
           }
           return 0;
         });
-        console.log({ asteroidMap });
 
         setAvgSizeOfAsteroidInKM(
           asteroidMap.reduce(
             (acc, curr) => acc + curr.estimated_diameter_max,
             0
-          ) / asteroidMap.length
+          ) / asteroidCount
         );
 
         setFastestAsteroidInKMH(
@@ -122,7 +120,6 @@ const Home = () => {
             asteroidMap[asteroidMap.length - 1].date
           ].find((item) => (item.id = asteroidMap[asteroidMap.length - 1].date))
         );
-        console.log({ fastestAsteroidInKMH });
 
         asteroidMap.sort((x, y) => {
           if (x.closest_kilometers > y.closest_kilometers) {
@@ -134,7 +131,6 @@ const Home = () => {
           return 0;
         });
 
-        console.log({ asteroidMap });
         setFastestAsteroidInKMH(
           data.near_earth_objects[
             asteroidMap[asteroidMap.length - 1].date
